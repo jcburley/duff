@@ -1,0 +1,67 @@
+Brief hacking guide to duff
+===========================
+
+Basic nomenclature
+==================
+
+Entry n.
+  A file, specified on the command line or found via directory recursion,
+  included in the set of files checked for duplicates.
+
+Cluster n.
+  A collection of entries which represent files with equal contents, i.e. a
+  collection of duplicate files.
+
+Directory n.
+  A physical directory (inode, not link) which has been searched for entries.
+
+
+Important files
+===============
+
+duff.c
+  Program main, information printing and option handling.
+  
+duffdriver.c
+  Primary program logic; entry collection and cluster reporting.
+
+duffentry.c
+  Functionality for dealing with 'entries', i.e. collected files.
+
+duffstring.c duffstring.h
+  Replacement implementations of various libc string functions.
+
+duffutil.c
+  Error reporting and various other utility functions.
+
+duff.h
+  Main header file.
+
+sha1.c sha1.h
+  Implements SHA1 checksum calculation.
+
+
+Important functions
+===================
+
+duffentry.c: compare_entries()
+  The main comparison function for entries.  Start there if you wish to hack
+  the comparison algorithm.
+
+duffentry.c: compare_entry_*() and get_entry_*()
+  Compares and collects various entry attributes, respectively.  Start here if
+  you wish to modify one of the existing comparison methods.
+
+duffdriver.c: process_path() and recurse_directory()
+  The main functions for collecting files and making entries.  Start there if
+  you wish to hack the traversal algorithm.
+
+duffdriver.c: report_clusters()
+  Finds and reports the clusters of duplicate files in the list of entries, or
+  collected files.  Start here if you wish to optimise list traversal or alter
+  normal program output.
+
+duffdriver.c: has_recursed_directory() and record_directory()
+  Records traversed directories (in a very primitive way).  Start here if you
+  wish to modify the 'loop detection' algorithm.
+
