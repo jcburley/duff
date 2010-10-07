@@ -100,10 +100,13 @@ static int has_recursed_directory(dev_t device, ino_t inode);
 static void recurse_directory(const char* path,
                               const struct stat* sb,
 			      int depth);
-static void report_cluster(struct Entry* duplicates,
+static void report_cluster(struct Entry** duplicates,
                            unsigned int number,
 			   unsigned int count);
 static int cmpentryp(const void *p1, const void *p2);
+static int compare_separators(const char *left, const char *right);
+static int count_separators(const char *str);
+static int compare_lengths(const char *left, const char *right);
 
 /* Stat:s a file according to the specified options.
  */
@@ -297,38 +300,26 @@ void process_path(const char* path, int depth)
 
 /* Reports a cluster to stdout, according to the specified options.
  */
-static void report_cluster(struct Entry* duplicates,
+static void report_cluster(struct Entry** duplicates,
                            unsigned int number,
 			   unsigned int count)
 {
   struct Entry* entry;
+  int ix;
 
-  if (excess_flag)
-  {
-    /* Report all but the first entry in the cluster */
-    for (entry = duplicates->next;  entry;  entry = entry->next)
+  if (!excess_flag && *header_format != '\0')
+    print_cluster_header(header_format,
+			 count,
+			 number,
+			 duplicates[0]->size,
+			 duplicates[0]->checksum);
+
+  for (ix = excess_flag ? 1 : 0; ix < count; ++ix)
     {
+      entry = duplicates[ix];
       printf("%s\n", entry->path);
       entry->status = REPORTED;
     }
-  }
-  else
-  {
-    /* Print header and report all entries in the cluster */
-
-    if (*header_format != '\0')
-      print_cluster_header(header_format,
-			   count,
-			   number,
-			   duplicates->size,
-			   duplicates->checksum);
-
-    for (entry = duplicates;  entry;  entry = entry->next)
-    {
-      printf("%s\n", entry->path);
-      entry->status = REPORTED;
-    }
-  }
 }
 
 /* Finds and reports all duplicate clusters among the collected entries.
@@ -338,7 +329,6 @@ void report_clusters(void)
   int number = 1, count, ix, dup_ix, num_entries;
   struct Entry* base;
   struct Entry* entry;
-  struct Entry* duplicates = NULL;
   struct Entry** entries;
 
   /* Count how many entries we've added (TODO: optimize this away by incrementing the count each time we add an entry). */
@@ -380,17 +370,7 @@ void report_clusters(void)
 
       if (compare_entries(base, entry) == 0)
       {
-	if (duplicates == NULL)
-	{
-	  unlink_entry(&file_entries, base);
-	  link_entry(&duplicates, base);
-	  
-	  base->status = DUPLICATE;
-	}
-	
-	unlink_entry(&file_entries, entry);
-	link_entry(&duplicates, entry);
-	
+	base->status = DUPLICATE;
 	entry->status = DUPLICATE;
       }
       else
@@ -400,14 +380,10 @@ void report_clusters(void)
     }
 
     count = dup_ix - ix;
-     
-    /* When we get back to the outer loop, we'll want to skip over all the duplicates.  */
-    ix = dup_ix - 1;
 
-    if (duplicates)
+    if (count > 1)
     {
-      report_cluster(duplicates, number, count);
-      free_entry_list(&duplicates);
+      report_cluster(entries + ix, number, count);
       number++;
     }
     else
@@ -415,6 +391,9 @@ void report_clusters(void)
       unlink_entry(&file_entries, base);
       free_entry(base);
     }
+     
+    /* When we get back to the outer loop, we'll want to skip over all the duplicates.  */
+    ix = dup_ix - 1;
   }
 }
 
@@ -423,21 +402,64 @@ cmpentryp(const void *p1, const void *p2)
 {
   /* Each actual argument to this function is "pointer to pointer to Entry". */
 
-  struct Entry** left = (struct Entry**) p1;
-  struct Entry** right = (struct Entry**) p2;
+  struct Entry* left = *(struct Entry**) p1;
+  struct Entry* right = *(struct Entry**) p2;
 
   int result;
 
-  result = compare_entries(*left, *right);
+  result = compare_entries(left, right);
   if (result != 0)
     return result;
   
-  /* Stabilize the sort: if the entries compare equal in terms of content, return whichever entry appears first
-     in the array of pointers, since that's the order in which we read them in.  (TODO: Not necessarily, they
-     might have been moved around already, so use something in the Entry's themselves.)  */
+  /* Stabilize the sort: since the entries compare equal in terms of content, use
+     the number of path-separator characters, then the path length, then the
+     path name (which must be different). */
 
-  if (left < right)
-    return -1;
-  return 1;
+  result = compare_separators(left->path, right->path);
+  if (result != 0)
+    return result;
+
+  result = compare_lengths(left->path, right->path);
+  if (result != 0)
+    return result;
+
+  return strcmp(left->path, right->path);
 }
 
+static int
+compare_separators(const char *left, const char *right)
+{
+  int n_left = count_separators(left);
+  int n_right = count_separators(right);
+
+  if (n_left < n_right)
+    return -1;
+  if (n_left > n_right)
+    return 1;
+  return 0;
+}
+
+static int
+count_separators(const char *str)
+{
+  int count = 0;
+
+  for (count = 0; *str != '\0'; ++str)
+    if (*str == '/')
+      ++count;
+
+  return count;
+}
+
+static int
+compare_lengths(const char *left, const char *right)
+{
+  int n_left = strlen(left);
+  int n_right = strlen(right);
+
+  if (n_left < n_right)
+    return -1;
+  if (n_left > n_right)
+    return 1;
+  return 0;
+}
