@@ -4,6 +4,9 @@ Main files
 Camilla Berglund <elmindreda@users.sourceforge.net> wrote the first
 version of duff, and is currently the main author.
 
+James Craig Burley <james@jcb-sc.com> modified version 0.4 of duff
+to create version 0.5.
+
 Duff contains and uses the SHA1 message digest code from the sha-asaddi
 package, which was written by Allan Saddi <allan@saddi.com>.  See the
 files `sha1.c' or `sha1.h' for copyright and license details.

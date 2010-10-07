@@ -1,6 +1,12 @@
 User-visible changes in duff
 ============================
 
+Version 0.5
+-----------
+
+* Improved performance of duplicate-entry search by using qsort.
+* Fix join-duplicates.sh to quote the directory name and to log deleted files.
+
 Version 0.4
 -----------
 

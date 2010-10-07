@@ -15,7 +15,7 @@ if [ "$1" == '' ]; then
   exit 1
 fi
 
-duff -r '-f#' -z -p -P "$1" |
+duff -r '-f#' -z -p -P -t "$1" |
 (
   while read file 
   do
@@ -25,12 +25,13 @@ duff -r '-f#' -z -p -P "$1" |
       if [ "$first" == '' ]; then
         first="$file"
       else
-	temp=`mktemp -p \`dirname $file\``
+	temp=`mktemp -p \`dirname "$file"\``
 
 	mv "$file" "$temp" && \
 	ln "$first" "$file" && \
 	touch --reference="$temp" "$file" && \
-	rm "$temp"
+	rm "$temp" && \
+	echo "Removed duplicate of $first: $file"
 
 	if [ $? != 0 ]; then
 	  echo "`basename $0`: $file: failed to join with $first"

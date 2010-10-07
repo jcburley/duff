@@ -72,8 +72,8 @@
 #include <dirent.h>
 #endif
 
-#include "duffstring.h"
 #include "duff.h"
+#include "duffstring.h"
 
 /* These flags are defined and documented in duff.c.
  */
@@ -103,6 +103,7 @@ static void recurse_directory(const char* path,
 static void report_cluster(struct Entry* duplicates,
                            unsigned int number,
 			   unsigned int count);
+static int cmpentryp(const void *p1, const void *p2);
 
 /* Stat:s a file according to the specified options.
  */
@@ -334,24 +335,48 @@ static void report_cluster(struct Entry* duplicates,
  */
 void report_clusters(void)
 {
-  int number = 1, count = 0;
+  int number = 1, count, ix, dup_ix, num_entries;
   struct Entry* base;
   struct Entry* entry;
-  struct Entry* entry_next;
   struct Entry* duplicates = NULL;
+  struct Entry** entries;
 
-  /* TODO: Implement a more efficient data structure */
+  /* Count how many entries we've added (TODO: optimize this away by incrementing the count each time we add an entry). */
 
-  while ((base = file_entries) != NULL)
+  for (ix = 0, base = file_entries; base != NULL;  base = base->next)
+    {
+      ++ix;
+    }
+
+  if (ix == 0)
+    return;
+
+  /* Create an array of pointers to the entries themselves. */
+
+  num_entries = ix;
+  entries = (struct Entry**) malloc(num_entries * sizeof(struct Entry*));
+
+  for (ix = 0, base = file_entries; base != NULL;  ++ix, base = base->next)
+    {
+      entries[ix] = base;
+    }
+
+  /* Sort the array. */
+
+  qsort(entries, num_entries, sizeof(struct Entry*), cmpentryp);
+
+  /* Now go through the array, finding duplicates. */
+
+  for (ix = 0; ix < num_entries; ++ix)
   {
+    base = entries[ix];
+
     if (base->status == INVALID)
       continue;
 
-    count = 0;
-    
-    for (entry = base->next;  entry;  entry = entry_next)
+    for (dup_ix = ix + 1; dup_ix < num_entries; ++dup_ix)
     {
-      entry_next = entry->next;
+      entry = entries[dup_ix];
 
       if (compare_entries(base, entry) == 0)
       {
@@ -361,17 +386,24 @@ void report_clusters(void)
 	  link_entry(&duplicates, base);
 	  
 	  base->status = DUPLICATE;
-	  count++;
 	}
 	
 	unlink_entry(&file_entries, entry);
 	link_entry(&duplicates, entry);
 	
 	entry->status = DUPLICATE;
-	count++;
       }
+      else
+	/* This should give us the speedup we want: since the list of entries is now sorted by the comparison function,
+	   we should have each set of duplicates grouped together.  */
+	break;
     }
+
+    count = dup_ix - ix;
      
+    /* When we get back to the outer loop, we'll want to skip over all the duplicates.  */
+    ix = dup_ix - 1;
+
     if (duplicates)
     {
       report_cluster(duplicates, number, count);
@@ -384,5 +416,28 @@ void report_clusters(void)
       free_entry(base);
     }
   }
+}
+
+static int
+cmpentryp(const void *p1, const void *p2)
+{
+  /* Each actual argument to this function is "pointer to pointer to Entry". */
+
+  struct Entry** left = (struct Entry**) p1;
+  struct Entry** right = (struct Entry**) p2;
+
+  int result;
+
+  result = compare_entries(*left, *right);
+  if (result != 0)
+    return result;
+  
+  /* Stabilize the sort: if the entries compare equal in terms of content, return whichever entry appears first
+     in the array of pointers, since that's the order in which we read them in.  (TODO: Not necessarily, they
+     might have been moved around already, so use something in the Entry's themselves.)  */
+
+  if (left < right)
+    return -1;
+  return 1;
 }
 

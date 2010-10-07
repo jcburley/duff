@@ -277,6 +277,8 @@ int main(int argc, char** argv)
 	break;
     }
   }
+
+  warning("paths processed; now sorting entries and reporting clusters");
   
   report_clusters();
   

@@ -1,0 +1,155 @@
+duff - Duplicate file finder
+============================
+
+0. Introduction
+===============
+
+Duff is a command-line utility for identifying duplicates in a given set of
+files.  It attempts to be usably fast, and uses SHA1 checksums as a part of
+the comparisons.
+
+The project website is here:
+
+  http://duff.sourceforge.net/
+
+Duff resides in public CVS on cvs.sourceforge.net.  The CVSROOT for anonymous,
+read-only access is:
+
+  :pserver:anonymous@cvs.sourceforge.net:/cvsroot/duff
+
+The CVS module for duff 0.x is `duff'.
+
+The version numbering scheme for duff is as follows:
+
+ * The first number is the major version.  This will be updated upon what the
+   author considers a round of feature completion.  The only feature currently
+   missing for the next major release is i18n.
+
+ * The second number is the minor version number.  This is updated for releases
+   that include minor new features, or features that do not change the
+   functionality of the program.
+
+ * The third number, if present, is the bugfix release number.  This indicates
+   a release which only fixes bugs present in a previous major or minor release.
+
+
+1. License and copyright
+========================
+
+Duff is copyright (c) 2005 Camilla Berglund <elmindreda@users.sourceforge.net>
+
+Duff is licensed under the zlib/libpng license.  See the file `COPYING' for
+license details.  The license is also included at the top of each source file.
+
+Duff contains sha1-asaddi.
+Copyright (c) 2001-2003 Allan Saddi <allan@saddi.com>
+See the files `sha1.c' or `sha1.h' for license details.
+
+
+2. Project news
+===============
+
+See the file `NEWS'.
+
+
+3. Building Duff
+================
+
+If you got this source tree from a CVS repository, you will need to bootstrap
+the build environment using `bootstrap.sh'.  Note that this script requires
+autoconf and automake to run.
+
+If (or once) you have a `configure' script, go ahead and run it.  No additional
+magic should be required.  If it is, then that's a bug and should be reported.
+
+This release of duff has been successfully built on the following systems:
+
+  Arch Linux x86
+  Darwin 7.9.0 powerpc
+  Debian Etch powerpc
+  Debian Sarge alpha
+  FreeBSD 4.11 x86
+  FreeBSD 5.4 x86
+  NetBSD 1.6.1 sparc
+  SunOS 5.9 sparc64
+  Ubuntu Breezy x86
+
+Earlier releases have been successfully built on the following systems:
+
+  Arch Linux x86
+  Darwin 7.9.0 powerpc
+  Debian Etch powerpc
+  Debian Sarge alpha
+  FreeBSD 4.11 x86
+  FreeBSD 5.4 x86
+  SunOS 5.9 sparc64
+
+The tools used were gcc and GNU or BSD make.  However, it should build on most
+Unix systems without modifications.
+
+
+4. Installing Duff
+==================
+
+See the file `INSTALL'.
+
+
+5. Using Duff
+=============
+
+See the accompanying manpage duff(1).
+
+To read the manpage before installation, use the following command:
+
+  groff -mdoc -Tascii duff.1 | less -R
+
+On Linux systems, however, the following command may suffice:
+
+  man -l duff.1
+
+
+6. Hacking Duff
+===============
+
+See the file `HACKING'.
+
+
+7. Bugs, feedback and patches
+=============================
+
+Please send bug reports, feedback, patches and cookies to:
+Camilla Berglund <elmindreda@users.sourceforge.net>
+
+For more involved discussions, please join the mailing list:
+http://lists.sourceforge.net/lists/listinfo/duff-devel
+
+
+8. Disambiguation
+=================
+
+This is duff, the Unix command-line utility, and not DUFF, the Windows program.
+If you wish to find duplicate files on Windows, use DUFF.
+
+
+9. Release history
+===================
+
+Version 0.1 was named `duplicate', and was never released anywhere.
+
+Version 0.2 was the first release named duff.  It lacked a real checksumming
+algorithm, and was thus only released to a few individuals, during the first
+half of 2005.
+
+Version 0.3 was the first official release, on November 22, 2005, after a
+prolonged search for a suitably licensed implementation of SHA1.
+
+Version 0.3.1 was a bugfix release, on November 27, 2005, adding a single
+feature (-z), which just happened to get included.
+
+Version 0.4 was the second feature release, on January 13, 2006, adding a
+number of missing and/or requested features as well as bug fixes.  It was the
+first release to be considered stable and safe enough for everyday use.
+
+Version 0.5 improves the algorithm that searches for duplicates by
+sorting the list of entries.  The changes to this version were contributed
+by James Craig Burley <james@jcb-sc.com>.

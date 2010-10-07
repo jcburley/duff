@@ -3,6 +3,12 @@ Change log for duff
 
 Started as of version 0.3.1.
 
+2010-10-06  James Craig Burley  <craig@cardinal>
+
+ * duffdriver.c: Improve performance of duplicate-entry search.
+ * join-duplicates.sh: Fix to support spaces in directory names
+     and to log deleted files.
+
 2006-01-11  Camilla Berglund  <elmindreda@users.sourceforge.net> 
 
  * duffdriver.c (stat_file): Added parenthesis to remove warning.

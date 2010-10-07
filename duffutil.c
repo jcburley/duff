@@ -53,8 +53,8 @@
 #endif
 
 #include "sha1.h"
-#include "duffstring.h"
 #include "duff.h"
+#include "duffstring.h"
 
 /* Prints a formatted message to stderr and exist with non-zero status.
  */

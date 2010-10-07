@@ -13,7 +13,6 @@ Documentation
 
 Optimisation
 * Make directory cache less stupid and slow.
-* Do smart stuff to make things go faster.
+* Do smart stuff to make things go faster (duplicate-entry detection now uses qsort for better performance).
 * Change linear lists into hash tables or trees?
 * Compare contents directly for clusters of two in excess mode?
-

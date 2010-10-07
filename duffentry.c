@@ -61,6 +61,9 @@
 #include "sha1.h"
 #include "duff.h"
 
+/* We just free to be nice before we exit, so let exiting take care of that.  (Or define to free((x)).) */
+#define maybe_free(x)
+
 /* These flags are defined and documented in duff.c.
  */
 extern int quiet_flag;
@@ -135,10 +138,12 @@ void free_entry(struct Entry* entry)
   assert(entry->prev == NULL);
   assert(entry->next == NULL);
 
-  free(entry->samples);
-  free(entry->checksum);
-  free(entry->path);
-  free(entry);
+  if (entry->samples != NULL)
+    maybe_free(entry->samples);
+  if (entry->checksum != NULL)
+    maybe_free(entry->checksum);
+  maybe_free(entry->path);
+  maybe_free(entry);
 }
 
 /* Frees a list of entries.
@@ -266,24 +271,28 @@ static int get_entry_checksum(struct Entry* entry)
  */
 int compare_entries(struct Entry* first, struct Entry* second)
 {
-  if (first->size != second->size)
+  int result;
+
+  if (first->size < second->size)
     return -1;
+  if (first->size > second->size)
+    return 1;
 
   if (first->size >= sample_limit)
   {
-    if (compare_entry_samples(first, second) != 0)
-      return -1;
+    if ((result = compare_entry_samples(first, second)) != 0)
+      return result;
   }
 
   /* NOTE: Skip checksumming if potential cluster only has two entries?
    * NOTE: Requires knowledge from higher level */
-  if (compare_entry_checksums(first, second) != 0)
-    return -1;
+  if ((result = compare_entry_checksums(first, second)) != 0)
+    return result;
 
   if (thorough_flag)
   {
-    if (compare_entry_contents(first, second) != 0)
-      return -1;
+    if ((result = compare_entry_contents(first, second)) != 0)
+      return result;
   }
 
   return 0;
@@ -302,8 +311,12 @@ static int compare_entry_checksums(struct Entry* first, struct Entry* second)
     return -1;
 
   for (i = 0;  i < SHA1_HASH_SIZE;  i++)
-    if (first->checksum[i] != second->checksum[i])
+  {
+    if (first->checksum[i] < second->checksum[i])
       return -1;
+    if (first->checksum[i] > second->checksum[i])
+      return 1;
+  }
 
   return 0;
 }
@@ -321,8 +334,12 @@ static int compare_entry_samples(struct Entry* first, struct Entry* second)
     return -1;
 
   for (i = 0;  i < SAMPLE_COUNT;  i++)
-    if (first->samples[i] != second->samples[i])
+  {
+    if (first->samples[i] < second->samples[i])
       return -1;
+    if (first->samples[i] > second->samples[i])
+      return 1;
+  }
 
   return 0;
 }
@@ -359,9 +376,14 @@ static int compare_entry_contents(struct Entry* first, struct Entry* second)
   {
     fc = fgetc(first_stream);
     sc = fgetc(second_stream);
-    if (fc != sc)
+    if (fc < sc)
     {
       result = -1;
+      break;
+    }
+    if (fc > sc)
+    {
+      result = 1;
       break;
     }
   }
